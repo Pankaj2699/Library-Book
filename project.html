@@ -1,0 +1,98 @@
+<html lang="en">
+  <head>
+    <title>Books Library App</title>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+  <body>
+    <form>
+      <label for="search-input">Search for books:</label>
+      <input type="text" id="search-input">
+
+      <label for="subject-dropdown">Select a subject:</label>
+      <select id="subject-dropdown"></select>
+
+      <button type="submit" id="search-btn">Search</button>
+    </form>
+
+    <ul id="book-list"></ul>
+
+    <div id="book-details"></div>
+
+    <script>
+      const searchInput = document.getElementById('search-input');
+      const subjectDropdown = document.getElementById('subject-dropdown');
+      const searchBtn = document.getElementById('search-btn');
+      const bookList = document.getElementById('book-list');
+      const bookDetails = document.getElementById('book-details');
+
+      // Fetch subjects related to the user input
+      function fetchSubjects() {
+        fetch(`https://openlibrary.org/subjects/${searchInput.value}.json`)
+          .then(response => response.json())
+          .then(data => {
+            // Display subjects in the dropdown list
+            data.subjects.forEach(subject => {
+              const option = document.createElement('option');
+              option.value = subject.name;
+              option.textContent = subject.name;
+              subjectDropdown.appendChild(option);
+            });
+          })
+          .catch(error => {
+            console.error(error);
+            alert('Error fetching subjects');
+          })
+      }
+
+      // Fetch books related to the selected subject
+      function fetchBooks(event) {
+        event.preventDefault()
+
+        const selectedSubject = subjectDropdown.value;
+        fetch(`https://openlibrary.org/search.json?subject=${selectedSubject}`)
+          .then(response => response.json())
+          .then(data => {
+            // Display books in the list
+            bookList.innerHTML = '';
+            data.docs.forEach(book => {
+              const li = document.createElement('li');
+              li.textContent = book.title;
+              li.addEventListener('click', () => {
+                // Display details of the selected book
+                displayBookDetails(book);
+              });
+              bookList.appendChild(li);
+            });
+          })
+          .catch(error => {
+            console.error(error);
+            alert('Error fetching books');
+          });
+      }
+
+      // Fetch details of the selected book
+      function displayBookDetails(book) {
+        fetch(`https://openlibrary.org/books/${book.key}.json`)
+          .then(response => response.json())
+          .then(data => {
+            // Display details of the selected book
+            bookDetails.innerHTML = `
+              <h2>${data.title}</h2>
+              <p>Author: ${data.authors[0].name}</p>
+              <p>Publication Date: ${data.publish_date}</p>
+              <img src="https://covers.openlibrary.org/b/id/${data.cover_i}-L.jpg" alt="Book cover">
+            `;
+          })
+          .catch(error => {
+            console.error(error);
+            alert('Error fetching book details');
+          });
+      }
+
+      // Attach event listeners
+      searchBtn.addEventListener('click', fetchBooks);
+      searchInput.addEventListener('input', fetchSubjects);
+    </script>
+  </body>
+</html>
